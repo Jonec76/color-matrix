@@ -8,6 +8,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.NonWritableChannelException;
 import java.security.MessageDigest;
@@ -37,29 +40,60 @@ public class main {
 	final static int row=7, col=8;
 	
 	public static void main(String[] args) {
-		int [][] data = new int[row][col]; 
-		JLabel[][] arrayBtn = new JLabel[row][col];
-		
-        JFrame frame = new JFrame("床墊壓力分佈");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 1000);
-         
-        GridLayout grid = new GridLayout(row, col, 10, 10);
-        frame.setLayout(grid);
-        
-        data = readData();
-
-        for(int i=0; i < row; i++) {
-        	for(int j=0;j< col;j++) {
-	            arrayBtn[i][j] = new JLabel(Integer.toString(data[i][j]), SwingConstants.CENTER);
-//	            arrayBtn[i][j].setBackground(singleColor(data[i][j]));
-	            arrayBtn[i][j].setBackground(multiColor(data[i][j]));
-	            arrayBtn[i][j].setOpaque(true);
-	            frame.add(arrayBtn[i][j]);
-        	}
-        }
-        
-        frame.setVisible(true);
+		try{  
+			ServerSocket ss=new ServerSocket(6666); 
+			System.out.print("Server");
+			
+		 
+			int [][] data = new int[row][col]; 
+			JLabel[][] arrayBtn = new JLabel[row][col];
+			
+	        JFrame frame = new JFrame("床墊壓力分佈");
+	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	        frame.setSize(1000, 1000);
+	         
+	        GridLayout grid = new GridLayout(row, col, 10, 10);
+	        frame.setLayout(grid);
+	        
+	        for(int i=0; i < row; i++) {
+	        	for(int j=0;j< col;j++) {
+		            arrayBtn[i][j] = new JLabel(Integer.toString(data[i][j]), SwingConstants.CENTER);
+		            frame.add(arrayBtn[i][j]);
+	        	}
+	        }
+	        
+	        for(;;) {
+		        Socket s=ss.accept();//establishes connection   
+				System.out.println("Client connects");
+				DataInputStream dis=new DataInputStream(s.getInputStream());  
+				String  str=(String)dis.readUTF();  
+	//	        data = readData();
+		        String[] arrOfStr = str.split("\n"); 
+		        for(int i=0;i<arrOfStr.length;i++) {
+			        int j=0;
+			        String[] arrOfValue = arrOfStr[i].split(", ");
+			        for(String a: arrOfValue) {
+			        	data[i][j] = Integer.parseInt(a);
+			        	j++;
+			        }
+				}
+		        
+		        for(int i=0; i < row; i++) {
+		        	for(int j=0;j< col;j++) {
+//			            arrayBtn[i][j].setBackground(singleColor(data[i][j]));
+		        		arrayBtn[i][j].setText(Integer.toString(data[i][j]));
+			            arrayBtn[i][j].setBackground(multiColor(data[i][j]));
+			            arrayBtn[i][j].setOpaque(true);
+		        	}
+		        }
+		        frame.revalidate();
+		        frame.repaint();
+		        frame.setVisible(true);
+	        }
+	        
+		}catch(Exception e){
+			System.out.println(e);
+		} 
 	}
 	
 	
